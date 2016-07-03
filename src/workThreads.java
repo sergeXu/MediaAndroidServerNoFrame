@@ -190,7 +190,7 @@ class workThreads {
 			private static final int VideoInfoQuestPORT = 35034;
 			private boolean life = true;
 			private byte[] msgRec = new byte[512];
-			private byte[] msgSend = new byte[1024];
+			private byte[] msgSend = new byte[2048];
 			private String isol_big = "%####";
 
 			@Override
@@ -262,6 +262,59 @@ class workThreads {
 				}
 			}
 		}).start();
+
+		
+		// listen time testing from client thread
+				new Thread(new Runnable() {
+					private static final int TimeTestQuestPORT = 35041;
+					private boolean life = true;
+					private byte[] msgRec = new byte[512];
+					private byte[] msgSend = new byte[1024];
+					@Override
+					public void run() {
+						DatagramSocket dSocket = null;
+						DatagramPacket dPacket = new DatagramPacket(msgRec, msgRec.length);
+						DatagramPacket dPacketSend = new DatagramPacket(msgSend, msgSend.length);
+						System.out.println("监听客户端延时测试服务器创建成功！\n");
+						try {
+							dSocket = new DatagramSocket(TimeTestQuestPORT);
+							while (life) {
+								try {
+									dSocket.receive(dPacket);
+
+									String datas = new String(dPacket.getData(), 0, dPacket.getLength());
+								
+									if (datas.charAt(0) == '4' && datas.charAt(1) == '4' && datas.charAt(2) == '4'
+											&& datas.charAt(3) == '4')
+									// send message
+									{	
+										System.out.println("return time msg is : " + datas + "\n");
+										// send message
+										InetAddress clientIP = null;
+										// get client IP
+										clientIP = dPacket.getAddress();
+										// get client port
+										int clientPort = dPacket.getPort();
+
+									//	System.out.println("@@@@" + clientIP + "  " + clientPort + "\n");
+										
+										dPacketSend = new DatagramPacket(datas.getBytes(), datas.length(), clientIP, clientPort);
+
+										try {
+											dSocket.send(dPacketSend); // sending
+										} catch (IOException e) {
+										}
+									}
+
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						} catch (SocketException e) {
+							e.printStackTrace();
+						}
+					}
+				}).start();
 
 		// publish list clean thread
 		new Thread(new Runnable() {
